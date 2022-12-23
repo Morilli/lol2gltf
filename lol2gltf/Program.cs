@@ -1,15 +1,15 @@
-﻿using CommandLine;
-using Fantome.Libraries.League.Helpers.Structures;
-using Fantome.Libraries.League.IO.MapGeometry;
-using Fantome.Libraries.League.IO.SimpleSkinFile;
-using Fantome.Libraries.League.IO.SkeletonFile;
-using ImageMagick;
-using lol2gltf.Core.ConversionOptions;
-using SharpGLTF.Schema2;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using LeagueAnimation = Fantome.Libraries.League.IO.AnimationFile.Animation;
+using CommandLine;
+using LeagueToolkit.Helpers.Structures;
+using LeagueToolkit.IO.MapGeometryFile;
+using LeagueToolkit.IO.SimpleSkinFile;
+using LeagueToolkit.IO.SkeletonFile;
+using lol2gltf.Core.ConversionOptions;
+using SharpGLTF.Schema2;
+using Image = SixLabors.ImageSharp.Image;
+using LeagueAnimation = LeagueToolkit.IO.AnimationFile.Animation;
 using LeagueConverter = lol2gltf.Core.Converter;
 
 namespace lol2gltf
@@ -220,9 +220,9 @@ namespace lol2gltf
             }
         }
 
-        private static Dictionary<string, MagickImage> CreateMaterialTextureMap(IEnumerable<string> materialTextures)
+        private static Dictionary<string, Image> CreateMaterialTextureMap(IEnumerable<string> materialTextures)
         {
-            var materialTextureMap = new Dictionary<string, MagickImage>();
+            var materialTextureMap = new Dictionary<string, Image>();
 
             foreach (string materialTexture in materialTextures)
             {
@@ -247,8 +247,11 @@ namespace lol2gltf
                     throw new Exception("Invalid format for material texture: " + materialTexture);
                 }
 
-                MagickImage textureImage = null;
-                try { textureImage = new MagickImage(texturePath); }
+                Image textureImage;
+                try
+                {
+                    textureImage = Image.Load(texturePath);
+                }
                 catch (Exception exception)
                 {
                     throw new Exception("Error: Failed to create an Image object for texture: " + texturePath, exception);
@@ -279,7 +282,7 @@ namespace lol2gltf
         {
             Console.WriteLine("----------SIMPLE SKIN INFO----------");
 
-            R3DBox boundingBox = simpleSkin.GetBoundingBox();
+            Box boundingBox = simpleSkin.GetBoundingBox();
             Console.WriteLine("Bounding Box:");
             Console.WriteLine("\t Min: " + boundingBox.Min.ToString());
             Console.WriteLine("\t Max: " + boundingBox.Max.ToString());

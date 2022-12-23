@@ -1,9 +1,6 @@
-﻿using Fantome.Libraries.League.IO.SimpleSkinFile;
-using ImageMagick;
+﻿using LeagueToolkit.IO.SimpleSkinFile;
 using Microsoft.WindowsAPICodePack.Dialogs;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using SixLabors.ImageSharp;
 
 namespace lol2gltf.UI.MVVM.ViewModels
 {
@@ -22,7 +19,7 @@ namespace lol2gltf.UI.MVVM.ViewModels
                 NotifyPropertyChanged();
             }
         }
-        public MagickImage Texture { get; private set; }
+        public Image Texture { get; private set; }
 
         private FileSelectionViewModel _textureFileSelection;
 
@@ -40,7 +37,7 @@ namespace lol2gltf.UI.MVVM.ViewModels
 
         private void OnSelectedTextureChanged(string filePath)
         {
-            this.Texture = new MagickImage(filePath);
+            this.Texture = Image.Load(filePath);
         }
     }
 }

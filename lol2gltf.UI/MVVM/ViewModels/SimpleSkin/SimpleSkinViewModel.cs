@@ -1,8 +1,5 @@
-﻿using Fantome.Libraries.League.IO.SimpleSkinFile;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text;
+﻿using System.Collections.ObjectModel;
+using LeagueToolkit.IO.SimpleSkinFile;
 
 namespace lol2gltf.UI.MVVM.ViewModels
 {

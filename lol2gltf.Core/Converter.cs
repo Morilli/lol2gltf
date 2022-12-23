@@ -1,15 +1,14 @@
-﻿using Fantome.Libraries.League.IO.MapGeometry;
-using Fantome.Libraries.League.IO.SimpleSkinFile;
-using Fantome.Libraries.League.IO.SkeletonFile;
-using Fantome.Libraries.League.IO.StaticObjectFile;
-using Fantome.Libraries.League.IO.WGT;
-using ImageMagick;
-using lol2gltf.Core.ConversionOptions;
-using SharpGLTF.Schema2;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using LeagueAnimation = Fantome.Libraries.League.IO.AnimationFile.Animation;
+using LeagueToolkit.IO.MapGeometryFile;
+using LeagueToolkit.IO.SimpleSkinFile;
+using LeagueToolkit.IO.SkeletonFile;
+using LeagueToolkit.IO.StaticObjectFile;
+using LeagueToolkit.IO.WGT;
+using lol2gltf.Core.ConversionOptions;
+using SharpGLTF.Schema2;
+using LeagueAnimation = LeagueToolkit.IO.AnimationFile.Animation;
 
 namespace lol2gltf.Core
 {
