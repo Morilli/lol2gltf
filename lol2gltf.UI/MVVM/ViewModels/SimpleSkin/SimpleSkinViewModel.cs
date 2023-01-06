@@ -1,5 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using LeagueToolkit.IO.SimpleSkinFile;
+using LeagueToolkit.Core.Mesh;
 
 namespace lol2gltf.UI.MVVM.ViewModels
 {
@@ -9,18 +9,18 @@ namespace lol2gltf.UI.MVVM.ViewModels
         public int FaceCount { get; private set; }
         public ObservableCollection<SimpleSkinSubmeshViewModel> Submeshes { get; private set; } = new ObservableCollection<SimpleSkinSubmeshViewModel>();
 
-        public SimpleSkin SimpleSkin { get; }
+        public SkinnedMesh SimpleSkin { get; }
 
-        public SimpleSkinViewModel(SimpleSkin simpleSkin)
+        public SimpleSkinViewModel(SkinnedMesh simpleSkin)
         {
             this.SimpleSkin = simpleSkin;
 
-            foreach (SimpleSkinSubmesh submesh in simpleSkin.Submeshes)
+            foreach (SkinnedMeshRange submesh in simpleSkin.Ranges)
             {
                 this.Submeshes.Add(new SimpleSkinSubmeshViewModel(submesh));
 
-                this.VertexCount += submesh.Vertices.Count;
-                this.FaceCount += submesh.Indices.Count / 3;
+                this.VertexCount += submesh.VertexCount;
+                this.FaceCount += submesh.IndexCount / 3;
             }
         }
     }

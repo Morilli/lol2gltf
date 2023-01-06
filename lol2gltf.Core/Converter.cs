@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using LeagueToolkit.Core.Mesh;
 using LeagueToolkit.IO.MapGeometryFile;
 using LeagueToolkit.IO.SimpleSkinFile;
 using LeagueToolkit.IO.SkeletonFile;
@@ -18,7 +19,7 @@ namespace lol2gltf.Core
 
         public static void ConvertSimpleSkin(SimpleSkinToGltf opts)
         {
-            SimpleSkin simpleSkin = ReadSimpleSkin(opts.SimpleSkinPath);
+            var simpleSkin = ReadSimpleSkin(opts.SimpleSkinPath);
             var gltf = simpleSkin.ToGltf(opts.MaterialTextures);
 
             gltf.Save(opts.OutputPath);
@@ -26,7 +27,7 @@ namespace lol2gltf.Core
 
         public static void ConvertSkinnedModel(SkinnedModelToGltf opts)
         {
-            SimpleSkin simpleSkin = ReadSimpleSkin(opts.SimpleSkinPath);
+            var simpleSkin = ReadSimpleSkin(opts.SimpleSkinPath);
             Skeleton skeleton = ReadSkeleton(opts.SkeletonPath);
 
             var gltf = simpleSkin.ToGltf(skeleton, opts.MaterialTextures, opts.Animations);
@@ -36,11 +37,12 @@ namespace lol2gltf.Core
 
         public static void CreateSimpleSkinFromLegacy(CreateSimpleSkinFromLegacy opts)
         {
-            StaticObject staticObject = StaticObject.ReadSCO(opts.StaticObjectPath);
-            WGTFile weightFile = new WGTFile(opts.WeightFilePath);
-            SimpleSkin simpleSkin = new SimpleSkin(staticObject, weightFile);
+            // TODO: this isn't supported currently
+            // StaticObject staticObject = StaticObject.ReadSCO(opts.StaticObjectPath);
+            // WGTFile weightFile = new WGTFile(opts.WeightFilePath);
+            // var simpleSkin = new SkinnedMesh(staticObject, weightFile);
 
-            simpleSkin.Write(opts.SimpleSkinPath);
+            // simpleSkin.WriteSimpleSkin(opts.SimpleSkinPath);
         }
 
         public static void ConvertMapGeometryToGltf(ConvertMapGeometryToGltf opts)
@@ -53,11 +55,11 @@ namespace lol2gltf.Core
 
         // ------------- BACKING FUNCTIONS ------------- \\
 
-        private static SimpleSkin ReadSimpleSkin(string location)
+        private static SkinnedMesh ReadSimpleSkin(string location)
         {
             try
             {
-                return new SimpleSkin(location);
+                return SkinnedMesh.ReadFromSimpleSkin(location);
             }
             catch (Exception exception)
             {

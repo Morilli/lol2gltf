@@ -1,4 +1,5 @@
-﻿using LeagueToolkit.IO.SimpleSkinFile;
+﻿using System.IO;
+using LeagueToolkit.Core.Mesh;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SixLabors.ImageSharp;
 
@@ -19,15 +20,15 @@ namespace lol2gltf.UI.MVVM.ViewModels
                 NotifyPropertyChanged();
             }
         }
-        public Image Texture { get; private set; }
+        public byte[] Texture { get; private set; }
 
         private FileSelectionViewModel _textureFileSelection;
 
-        public SimpleSkinSubmeshViewModel(SimpleSkinSubmesh submesh)
+        public SimpleSkinSubmeshViewModel(SkinnedMeshRange submesh)
         {
-            this.Name = submesh.Name;
-            this.VertexCount = submesh.Vertices.Count;
-            this.FaceCount = submesh.Indices.Count / 3;
+            this.Name = submesh.Material;
+            this.VertexCount = submesh.VertexCount;
+            this.FaceCount = submesh.IndexCount / 3;
 
             this.TextureFileSelection = new FileSelectionViewModel(
                 "Select a DDS texture",
@@ -37,7 +38,13 @@ namespace lol2gltf.UI.MVVM.ViewModels
 
         private void OnSelectedTextureChanged(string filePath)
         {
-            this.Texture = Image.Load(filePath);
+            var textureStream = new MemoryStream();
+            using (Image image = Image.Load(filePath))
+            {
+                image.SaveAsPng(textureStream);
+            }
+
+            this.Texture = textureStream.GetBuffer();
         }
     }
 }

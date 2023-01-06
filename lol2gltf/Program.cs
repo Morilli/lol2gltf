@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using CommandLine;
-using LeagueToolkit.Helpers.Structures;
+using LeagueToolkit.Core.Mesh;
+using LeagueToolkit.Core.Primitives;
 using LeagueToolkit.IO.MapGeometryFile;
 using LeagueToolkit.IO.SimpleSkinFile;
 using LeagueToolkit.IO.SkeletonFile;
 using lol2gltf.Core.ConversionOptions;
 using SharpGLTF.Schema2;
+using SixLabors.ImageSharp;
 using Image = SixLabors.ImageSharp.Image;
 using LeagueAnimation = LeagueToolkit.IO.AnimationFile.Animation;
 using LeagueConverter = lol2gltf.Core.Converter;
@@ -116,7 +118,6 @@ namespace lol2gltf
                 };
 
                 LeagueConverter.CreateSimpleSkinFromLegacy(createSimpleSkinFromLegacy);
-
             }
             catch (Exception exception)
             {
@@ -151,9 +152,9 @@ namespace lol2gltf
         private static int ConvertGltfToSimpleSkin(ConvertGltfToSimpleSkinOptions opts)
         {
             ModelRoot gltf = ReadGltf(opts.GltfPath);
-            (SimpleSkin simpleSkin, Skeleton skeleton) = gltf.ToLeagueModel();
+            (SkinnedMesh simpleSkin, Skeleton skeleton) = gltf.ToRiggedMesh();
 
-            simpleSkin.Write(opts.SimpleSkinPath);
+            simpleSkin.WriteSimpleSkin(opts.SimpleSkinPath);
             skeleton.Write(opts.SkeletonPath);
 
             return 1;
@@ -161,17 +162,18 @@ namespace lol2gltf
 
         // ------------- BACKING FUNCTIONS ------------- \\
 
-        private static SimpleSkin ReadSimpleSkin(string location)
+        private static SkinnedMesh ReadSimpleSkin(string location)
         {
             try
             {
-                return new SimpleSkin(location);
+                return SkinnedMesh.ReadFromSimpleSkin(location);
             }
             catch (Exception exception)
             {
                 throw new Exception("Error: Failed to read specified SKN file", exception);
             }
         }
+
         private static Skeleton ReadSkeleton(string location)
         {
             try
@@ -183,6 +185,7 @@ namespace lol2gltf
                 throw new Exception("Error: Failed to read specified SKL file", exception);
             }
         }
+
         private static List<(string, LeagueAnimation)> ReadAnimations(IEnumerable<string> animationPaths)
         {
             var animations = new List<(string, LeagueAnimation)>();
@@ -197,6 +200,7 @@ namespace lol2gltf
 
             return animations;
         }
+
         private static MapGeometry ReadMapGeometry(string location)
         {
             try
@@ -208,6 +212,7 @@ namespace lol2gltf
                 throw new Exception("Error: Failed to read map geometry file", exception);
             }
         }
+
         private static ModelRoot ReadGltf(string location)
         {
             try
@@ -220,9 +225,9 @@ namespace lol2gltf
             }
         }
 
-        private static Dictionary<string, Image> CreateMaterialTextureMap(IEnumerable<string> materialTextures)
+        private static Dictionary<string, ReadOnlyMemory<byte>> CreateMaterialTextureMap(IEnumerable<string> materialTextures)
         {
-            var materialTextureMap = new Dictionary<string, Image>();
+            var materialTextureMap = new Dictionary<string, ReadOnlyMemory<byte>>();
 
             foreach (string materialTexture in materialTextures)
             {
@@ -247,14 +252,20 @@ namespace lol2gltf
                     throw new Exception("Invalid format for material texture: " + materialTexture);
                 }
 
-                Image textureImage;
+                byte[] textureImage;
                 try
                 {
-                    textureImage = Image.Load(texturePath);
+                    var textureStream = new MemoryStream();
+                    using (Image image = Image.Load(texturePath))
+                    {
+                        image.SaveAsPng(textureStream);
+                    }
+
+                    textureImage = textureStream.GetBuffer();
                 }
                 catch (Exception exception)
                 {
-                    throw new Exception("Error: Failed to create an Image object for texture: " + texturePath, exception);
+                    throw new Exception($"Error: Failed to load texture {texturePath}: ", exception);
                 }
 
                 if (materialTextureMap.ContainsKey(material))
@@ -270,7 +281,7 @@ namespace lol2gltf
 
         private static int DumpSimpleSkinInfo(DumpSimpleSkinInfoOptions opts)
         {
-            SimpleSkin simpleSkin = ReadSimpleSkin(opts.SimpleSkinPath);
+            SkinnedMesh simpleSkin = ReadSimpleSkin(opts.SimpleSkinPath);
             if (simpleSkin != null)
             {
                 DumpSimpleSkinInfo(simpleSkin);
@@ -278,24 +289,25 @@ namespace lol2gltf
 
             return 1;
         }
-        private static void DumpSimpleSkinInfo(SimpleSkin simpleSkin)
+
+        private static void DumpSimpleSkinInfo(SkinnedMesh simpleSkin)
         {
             Console.WriteLine("----------SIMPLE SKIN INFO----------");
 
-            Box boundingBox = simpleSkin.GetBoundingBox();
+            Box boundingBox = simpleSkin.AABB;
             Console.WriteLine("Bounding Box:");
             Console.WriteLine("\t Min: " + boundingBox.Min.ToString());
             Console.WriteLine("\t Max: " + boundingBox.Max.ToString());
 
-            Console.WriteLine("Submesh Count: " + simpleSkin.Submeshes.Count);
+            Console.WriteLine("Submesh Count: " + simpleSkin.Ranges.Count);
 
-            foreach (SimpleSkinSubmesh submesh in simpleSkin.Submeshes)
+            foreach (SkinnedMeshRange submesh in simpleSkin.Ranges)
             {
                 Console.WriteLine("--- SUBMESH ---");
-                Console.WriteLine("Material: " + submesh.Name);
-                Console.WriteLine("Vertex Count: " + submesh.Vertices.Count);
-                Console.WriteLine("Index Count: " + submesh.Indices.Count);
-                Console.WriteLine("Face Count: " + submesh.Indices.Count / 3);
+                Console.WriteLine("Material: " + submesh.Material);
+                Console.WriteLine("Vertex Count: " + submesh.VertexCount);
+                Console.WriteLine("Index Count: " + submesh.IndexCount);
+                Console.WriteLine("Face Count: " + submesh.IndexCount / 3);
                 Console.WriteLine();
             }
         }

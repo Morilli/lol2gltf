@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -23,7 +24,7 @@ namespace lol2gltf.Core.Tests
         public void TestConvertSimpleSkinToGltf(string modelName)
         {
             string simpleSkinDirectoryPath = Path.Join(TESTFILES_SIMPLE_SKIN_DIR, modelName);
-            Dictionary<string, Image> materialTextureMap = CreateMaterialTextureMap(modelName);
+            Dictionary<string, ReadOnlyMemory<byte>> materialTextureMap = CreateMaterialTextureMap(modelName);
 
             SimpleSkinToGltf simpleSkinToGltf = new SimpleSkinToGltf()
             {
@@ -42,7 +43,7 @@ namespace lol2gltf.Core.Tests
         public void TestConvertSkinnedModelToGltf(string modelName)
         {
             string modelDirectoryPath = Path.Join(TESTFILES_SIMPLE_SKIN_DIR, modelName);
-            Dictionary<string, Image> materialTextureMap = CreateMaterialTextureMap(modelName);
+            Dictionary<string, ReadOnlyMemory<byte>> materialTextureMap = CreateMaterialTextureMap(modelName);
 
             SkinnedModelToGltf skinnedModelToGltf = new SkinnedModelToGltf()
             {
@@ -58,20 +59,29 @@ namespace lol2gltf.Core.Tests
             Assert.Pass("Successfully converted skinned model <{0}> to glTF", modelName);
         }
 
-        private Dictionary<string, Image> CreateMaterialTextureMap(string modelName)
+        private Dictionary<string, ReadOnlyMemory<byte>> CreateMaterialTextureMap(string modelName)
         {
             string simpleSkinDirectoryPath = Path.Join(TESTFILES_SIMPLE_SKIN_DIR, modelName);
             string materialTexturePathMapPath = Path.Join(simpleSkinDirectoryPath, modelName + ".materialmap.json");
             var materialTexturePathMap = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(materialTexturePathMapPath));
 
             // Create material texture map
-            var materialTextureMap = new Dictionary<string, Image>();
+            var materialTextureMap = new Dictionary<string, ReadOnlyMemory<byte>>();
             foreach (var materialTexturePath in materialTexturePathMap)
             {
-                Image texture = null;
+                byte[] texture = null;
                 string texturePath = Path.Join(simpleSkinDirectoryPath, materialTexturePath.Value);
 
-                Assert.DoesNotThrow(() => texture = Image.Load(texturePath), "Failed to load texture {0}", materialTexturePath.Value);
+                Assert.DoesNotThrow(() =>
+                {
+                    var textureStream = new MemoryStream();
+                    using (Image image = Image.Load(texturePath))
+                    {
+                        image.SaveAsPng(textureStream);
+                    }
+
+                    texture = textureStream.GetBuffer();
+                }, "Failed to load texture {0}", materialTexturePath.Value);
 
                 materialTextureMap.Add(materialTexturePath.Key, texture);
             }
